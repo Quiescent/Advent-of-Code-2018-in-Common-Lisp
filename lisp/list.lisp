@@ -6,5 +6,5 @@ i.e. what one would think of as one list being less than another."
         (longest (max (length xs) (length ys))))
     (labels ((less    (a) (< (car a) (cdr a)))
              (greater (a) (> (car a) (cdr a))))
-      (< (or (position-if #'less    zipped) longest)
-         (or (position-if #'greater zipped) longest)))))
+      (<= (or (position-if #'less    zipped) longest)
+          (or (position-if #'greater zipped) longest)))))
