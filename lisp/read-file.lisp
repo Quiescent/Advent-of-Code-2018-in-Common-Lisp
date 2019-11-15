@@ -13,4 +13,8 @@
   "Read the lines from FILE-NAME into a list and extract all numbers.
 
 Numbers are separated by anything other than a number."
-  (str:words (ppcre:regex-replace "[^0-9]" (file-lines file-name) " ")))
+  (mapcar (lambda (line) (mapcar #'read-from-string
+                            (str:words (ppcre:regex-replace-all "[^0-9]"
+                                                                line
+                                                                " "))))
+          (file-lines file-name)))
