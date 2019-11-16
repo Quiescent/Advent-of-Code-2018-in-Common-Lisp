@@ -56,14 +56,7 @@
 (defun find-sleepiest-guard-id (sleep-tables)
   (iter
     (for (id sleep-table) in-hashtable sleep-tables)
-    (for total-asleep = (reduce #'+ sleep-table))
-    (with most-asleep-id)
-    (with most-asleep-time)
-    (when (or (null most-asleep-id)
-              (> total-asleep most-asleep-time))
-      (setq most-asleep-id   id
-            most-asleep-time total-asleep))
-    (finally (return most-asleep-id))))
+    (finding id maximizing (reduce #'+ sleep-table))))
 
 ;; # PART 2:
 
@@ -78,14 +71,7 @@
 (defun find-guard-with-sleepiest-minute (sleep-tables)
   (iter
     (for (id sleep-table) in-hashtable sleep-tables)
-    (for max-sleep = (reduce #'max sleep-table))
-    (with most-asleep-id)
-    (with most-sleepy-minute)
-    (when (or (null most-asleep-id)
-              (> max-sleep most-sleepy-minute))
-      (setq most-asleep-id     id
-            most-sleepy-minute max-sleep))
-    (finally (return most-asleep-id))))
+    (finding id maximizing (reduce #'max sleep-table))))
 
 ;; Scratch area:
 
