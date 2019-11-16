@@ -1,3 +1,11 @@
+(ql:quickload "iterate")
+
+(defpackage :day2
+  (:use :common-lisp)
+  (:use :iter))
+
+(in-package :day2)
+
 (load "read-file.lisp")
 
 (defun day-2-part-1 ()
@@ -11,16 +19,12 @@
     (loop
       for c across s
       do (incf (gethash c counts 0)))
-    (loop
-      for key being the hash-keys in counts
-      with has-three = 0
-      with has-two   = 0
-      for count = (gethash key counts)
-      when (eq count 2)
-        do (setf has-two 1)
-      when (eq count 3)
-        do (setf has-three 1)
-      finally (return (values has-three has-two)))))
+    (iter
+      (for (nil count) in-hashtable counts)
+      (reducing (eq count 2) by #'or initial-value nil into has-two)
+      (reducing (eq count 3) by #'or initial-value nil into has-three)
+      (finally (return (values (if has-three 1 0)
+                               (if has-two 1 0)))))))
 
 (defun count-2-3s (codes)
   "Count the number of two's and three's."
