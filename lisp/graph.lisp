@@ -1,0 +1,6 @@
+(defun tuples-to-graph (tuples)
+  (let ((graph (make-hash-table :test #'equal)))
+    (dolist (tuple tuples graph)
+      (let ((from (car tuple))
+            (to   (cdr tuple)))
+        (push to (gethash from graph))))))
