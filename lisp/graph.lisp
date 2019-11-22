@@ -3,7 +3,8 @@
 (defpackage :graph
   (:use :common-lisp)
   (:use :iter)
-  (:export tuples-to-graph))
+  (:export tuples-to-graph)
+  (:export reverse-graph))
 
 (in-package :graph)
 
@@ -16,6 +17,16 @@
             (to   (cdr tuple)))
         (setf (gethash from graph)
               (delete-duplicates (push to (gethash from graph))))))))
+
+(defun reverse-graph (graph)
+  (let ((reversed (make-hash-table :test #'equal)))
+    (iter
+      (for (from tos) in-hashtable graph)
+      (iter
+        (for to in tos)
+        (setf (gethash to reversed)
+              (adjoin from (gethash to reversed))))
+      (finally (return reversed)))))
 
 (in-package :iter)
 
