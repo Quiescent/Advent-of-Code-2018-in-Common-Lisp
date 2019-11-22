@@ -22,7 +22,7 @@
 (defmacro-driver (FOR var DFS-ACROSS-GRAPH graph &sequence)
   "Search GRAPH depth-first, starting at the value of the FROM keyword binding VAR.
 
-TODO: Supports the BY keyword which should be a one argument function,
+Supports the BY keyword which should be a one argument function,
 accepting a list of the nodes available in the search now and should
 produce the next node."
   (let ((current-nodes      (gensym))
@@ -50,12 +50,50 @@ produce the next node."
        (setq ,current-nodes (delete ,var ,current-nodes))
        (setq ,current-nodes (append (gethash ,var ,g) ,current-nodes)))))
 
+(defmacro-driver (FOR var DFS-ACROSS-GRAPH-WITHOUT-DUPLICATES graph &sequence)
+  "Search GRAPH depth-first, starting at the value of the FROM keyword binding VAR.
+
+Supports the BY keyword which should be a one argument function,
+accepting a list of the nodes available in the search now and should
+produce the next node."
+  (let ((current-nodes      (gensym))
+        (g                  (gensym))
+        (visited            (gensym))
+        (kwd                (if generate 'generate 'for))
+        (non-default-search (not (eq 1 by))))
+    (cond
+      ((not (null upfrom))     (error "dfs-across-graph doesn't support upfrom"))
+      ((not (null downfrom))   (error "dfs-across-graph doesn't support downfrom"))
+      ((not (null to))         (error "dfs-across-graph doesn't support to"))
+      ((not (null downto))     (error "dfs-across-graph doesn't support downto"))
+      ((not (null above))      (error "dfs-across-graph doesn't support above"))
+      ((not (null below))      (error "dfs-across-graph doesn't support below"))
+      ((not (null with-index)) (error "dfs-across-graph doesn't support with-index")))
+    `(progn
+       (with ,visited       = (make-hash-table :test #'equal))
+       (with ,g             = ,graph)
+       (with ,current-nodes = (list ,from))
+       (while ,current-nodes)
+       (initially (setq ,var (if ,non-default-search
+                                 (funcall ,by ,current-nodes)
+                                 (car ,current-nodes))))
+       (,kwd ,var next (if ,non-default-search
+                           (funcall ,by ,current-nodes)
+                           (car ,current-nodes)))
+       (setq ,current-nodes (delete ,var ,current-nodes))
+       (when (gethash ,var ,visited)
+         (next-iteration))
+       (setf (gethash ,var ,visited) t)
+       (setq ,current-nodes (union (gethash ,var ,g) ,current-nodes)))))
+
 
 
 ;; Scratch
 
 ;; (defvar temp-graph)
-;; (setq temp-graph (graph:tuples-to-graph '((#\a . #\b) (#\a . #\c) (#\c . #\d) (#\b . #\f))))
+;; (setq temp-graph (graph:tuples-to-graph '((#\a . #\b) (#\a . #\c) (#\c . #\d) (#\b . #\f) (#\b . #\c))))
+
+;; (print "Standard:")
 
 ;; (iter
 ;;   (for x dfs-across-graph temp-graph from #\a)
@@ -65,4 +103,10 @@ produce the next node."
 
 ;; (iter
 ;;   (for x dfs-across-graph temp-graph from #\a by (lambda (xs) (car (last xs))))
+;;   (print x))
+
+;; (print "No duplicates:")
+
+;; (iter
+;;   (for x dfs-across-graph-without-duplicates temp-graph from #\a)
 ;;   (print x))
