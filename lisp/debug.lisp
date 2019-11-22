@@ -1,3 +1,7 @@
+(defpackage :debug
+  (:use :common-lisp)
+  (:export debug-hashtable))
+
 (defun debug-hashtable (table)
   (format nil
           "(~{~a~^
