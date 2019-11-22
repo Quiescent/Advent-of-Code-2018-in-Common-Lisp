@@ -14,7 +14,8 @@
         (error "Expected tuple."))
       (let ((from (car tuple))
             (to   (cdr tuple)))
-        (push to (gethash from graph))))))
+        (setf (gethash from graph)
+              (delete-duplicates (push to (gethash from graph))))))))
 
 (in-package :iter)
 
