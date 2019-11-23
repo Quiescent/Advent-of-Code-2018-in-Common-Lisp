@@ -33,11 +33,11 @@
 (defmacro-driver (FOR var DFS-ACROSS-GRAPH graph &sequence)
   "Search GRAPH depth-first, starting at the value of the FROM keyword binding VAR.
 
-Supports the BY keyword which should be a one argument function,
-accepting a list of the nodes available in the search now and should
-produce the next node."
-  (let ((current-nodes      (gensym))
-        (g                  (gensym))
+Supports the BY keyword which should be an expression which selects a
+node from the list CANDIDATE-NODES.  You should avoid modifying the
+list because it's used internally by the search."
+  (let ((g                  (gensym))
+        (count              (gensym))
         (kwd                (if generate 'generate 'for))
         (non-default-search (not (eq 1 by))))
     (cond
@@ -50,26 +50,31 @@ produce the next node."
       ((not (null with-index)) (error "DFS-ACROSS-GRAPH doesn't support WITH-INDEX"))
       ((null from)             (error "you must specify where the search should starte with FROM")))
     `(progn
-       (with ,g             = ,graph)
-       (with ,current-nodes = (list ,from))
-       (while ,current-nodes)
+       (with ,count          = 0)
+       (with ,g              = ,graph)
+       (with candidate-nodes = (list ,from))
+       (while candidate-nodes)
        (initially (setq ,var (if ,non-default-search
-                                 (funcall ,by ,current-nodes)
-                                 (car ,current-nodes))))
+                                 ,by
+                                 (car candidate-nodes))))
        (,kwd ,var next (if ,non-default-search
-                           (funcall ,by ,current-nodes)
-                           (car ,current-nodes)))
-       (setq ,current-nodes (delete ,var ,current-nodes))
-       (setq ,current-nodes (append (gethash ,var ,g) ,current-nodes)))))
+                           ,by
+                           (car candidate-nodes)))
+       (setq candidate-nodes (delete ,var candidate-nodes))
+       (setq candidate-nodes (append (gethash ,var ,g) candidate-nodes))
+       (incf ,count)
+       (when (> ,count 100000)
+         (finish)
+         (format t "DFS continued for more than 100000.  This is probably an error.")))))
 
 (defmacro-driver (FOR var DFS-ACROSS-GRAPH-WITHOUT-DUPLICATES graph &sequence)
   "Search GRAPH depth-first, starting at the value of the FROM keyword binding VAR.
 
-Supports the BY keyword which should be a one argument function,
-accepting a list of the nodes available in the search now and should
-produce the next node."
-  (let ((current-nodes      (gensym))
-        (g                  (gensym))
+Supports the BY keyword which should be an expression which selects a
+node from the list CANDIDATE-NODES.  You should avoid modifying the
+list because it's used internally by the search."
+  (let ((g                  (gensym))
+        (count              (gensym))
         (visited            (gensym))
         (kwd                (if generate 'generate 'for))
         (non-default-search (not (eq 1 by))))
@@ -83,21 +88,26 @@ produce the next node."
       ((not (null with-index)) (error "DFS-ACROSS-GRAPH doesn't support WITH-INDEX"))
       ((null from)             (error "you must specify where the search should starte with FROM")))
     `(progn
-       (with ,visited       = (make-hash-table :test #'equal))
-       (with ,g             = ,graph)
-       (with ,current-nodes = (list ,from))
-       (while ,current-nodes)
+       (with ,count          = 0)
+       (with ,visited        = (make-hash-table :test #'equal))
+       (with ,g              = ,graph)
+       (with candidate-nodes = (list ,from))
+       (while candidate-nodes)
        (initially (setq ,var (if ,non-default-search
-                                 (funcall ,by ,current-nodes)
-                                 (car ,current-nodes))))
+                                 ,by
+                                 (car candidate-nodes))))
        (,kwd ,var next (if ,non-default-search
-                           (funcall ,by ,current-nodes)
-                           (car ,current-nodes)))
-       (setq ,current-nodes (delete ,var ,current-nodes))
+                           ,by
+                           (car candidate-nodes)))
+       (setq candidate-nodes (delete ,var candidate-nodes))
        (when (gethash ,var ,visited)
          (next-iteration))
        (setf (gethash ,var ,visited) t)
-       (setq ,current-nodes (union (gethash ,var ,g) ,current-nodes)))))
+       (setq candidate-nodes (union (gethash ,var ,g) candidate-nodes))
+       (incf ,count)
+       (when (> ,count 100000)
+         (finish)
+         (format t "DFS continued for more than 100000.  This is probably an error.")))))
 
 
 
@@ -115,7 +125,7 @@ produce the next node."
 ;; (print "")
 
 ;; (iter
-;;   (for x dfs-across-graph temp-graph from #\a by (lambda (xs) (car (last xs))))
+;;   (for x dfs-across-graph temp-graph from #\a by (car (last candidate-nodes)))
 ;;   (print x))
 
 ;; (print "No duplicates:")
